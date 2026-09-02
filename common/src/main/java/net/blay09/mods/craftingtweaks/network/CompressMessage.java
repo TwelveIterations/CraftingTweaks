@@ -14,6 +14,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -84,7 +85,7 @@ public record CompressMessage(int slotNumber, CompressType compressType) impleme
                             if (suitableSlot != -1) {
                                 result.onCraftedBy(player, result.getCount());
                                 if (!player.getInventory().add(result)) {
-                                    player.drop(result, true);
+                                    player.drop(result, true, Prediction.SERVER_ONLY);
                                 }
                                 giveLeftoverItems(player, slotStack, 1);
                                 slot.remove(1);
@@ -177,7 +178,7 @@ public record CompressMessage(int slotNumber, CompressType compressType) impleme
             if (remainingItem != null) {
                 final var remainingItemStack = remainingItem.create();
                 if (!player.addItem(remainingItemStack)) {
-                    ItemEntity itemEntity = player.drop(remainingItemStack, false);
+                    ItemEntity itemEntity = player.drop(remainingItemStack, false, Prediction.SERVER_ONLY);
                     if (itemEntity != null) {
                         itemEntity.setNoPickUpDelay();
                         itemEntity.setTarget(player.getUUID());
@@ -265,7 +266,7 @@ public record CompressMessage(int slotNumber, CompressType compressType) impleme
             craftedStack.onCraftedBy(player, craftedStack.getCount());
             if (!player.getInventory().add(craftedStack)) {
                 // Drop the item on the ground if the inventory is full
-                player.drop(craftedStack, true);
+                player.drop(craftedStack, true, Prediction.SERVER_ONLY);
             }
         }
     }

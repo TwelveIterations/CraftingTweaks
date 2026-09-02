@@ -2,6 +2,7 @@ package net.blay09.mods.craftingtweaks.api.impl;
 
 import net.blay09.mods.craftingtweaks.api.CraftingGrid;
 import net.blay09.mods.craftingtweaks.api.GridClearHandler;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -31,7 +32,7 @@ public class DefaultGridClearHandler implements GridClearHandler<AbstractContain
                     player.getInventory().add(returnStack);
                     craftMatrix.setItem(slotIndex, returnStack.getCount() == 0 ? ItemStack.EMPTY : returnStack);
                     if (returnStack.getCount() > 0 && forced) {
-                        player.drop(returnStack, false);
+                        player.drop(returnStack, false, Prediction.SERVER_ONLY);
                         craftMatrix.setItem(slotIndex, ItemStack.EMPTY);
                     }
                 }

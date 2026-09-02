@@ -3,7 +3,6 @@ package net.blay09.mods.craftingtweaks.client;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.Window;
 import net.blay09.mods.balm.Balm;
 import net.blay09.mods.balm.client.BalmClientRegistrars;
 import net.blay09.mods.balm.client.gui.screens.BalmScreenUtils;
@@ -29,10 +28,8 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -41,7 +38,6 @@ import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -68,31 +64,12 @@ public class CraftingTweaksClient {
         ClientLifecycleCallback.ConnectedToServer.EVENT.register(client -> CraftingTweaks.isServerSideInstalled = false);
 
         ScreenCallback.Init.After.EVENT.register(CraftingTweaksClient::screenInitialized);
-        ScreenCallback.KeyPress.After.EVENT.register(CraftingTweaksClient::screenKeyPressed);
         ScreenCallback.MousePress.Before.EVENT.register(CraftingTweaksClient::screenMouseClick);
         ScreenCallback.MouseRelease.Before.EVENT.register(CraftingTweaksClient::screenMouseRelease);
         ScreenCallback.Render.BEFORE.register(CraftingTweaksClient::screenAboutToDraw);
         ScreenCallback.Render.AFTER.register(CraftingTweaksClient::screenDrawn);
 
         CraftingTweaksDebugger.initialize();
-    }
-
-    public static boolean screenKeyPressed(Screen screen, KeyEvent event) {
-        final var player = Minecraft.getInstance().player;
-        if (player != null) {
-            // Toggle client-only mode for testing if BLAY is held
-            Window window = Minecraft.getInstance().getWindow();
-            if (CraftingTweaks.isServerSideInstalled
-                    && GLFW.glfwGetKey(window.handle(), GLFW.GLFW_KEY_B) == 1
-                    && GLFW.glfwGetKey(window.handle(), GLFW.GLFW_KEY_L) == 1
-                    && GLFW.glfwGetKey(window.handle(), GLFW.GLFW_KEY_A) == 1
-                    && (GLFW.glfwGetKey(window.handle(), GLFW.GLFW_KEY_Y) == 1 || GLFW.glfwGetKey(window.handle(), GLFW.GLFW_KEY_Z) == 1)) {
-                CraftingTweaks.isServerSideInstalled = false;
-                player.sendSystemMessage(Component.literal("[CraftingTweaks] Enabled client-side testing mode"));
-                return true;
-            }
-        }
-        return false;
     }
 
     public static boolean screenMouseRelease(Screen screen, double mouseX, double mouseY, int button) {
