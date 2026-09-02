@@ -1,1 +1,1 @@
-- Fixed crash with abnormal ImageButtons added by other mods
+- Updated to Minecraft 26.3
