@@ -6,6 +6,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 
 public class DefaultRectangleGridRotateHandler implements GridRotateHandler<AbstractContainerMenu> {
 
@@ -103,13 +104,12 @@ public class DefaultRectangleGridRotateHandler implements GridRotateHandler<Abst
         int gridHeight = (int)Math.sqrt(size);
         Container matrixClone = new SimpleContainer(size);
         for (int i = 0; i < size; i++) {
-            int slotIndex = menu.getSlot(start + i).getContainerSlot();
-            matrixClone.setItem(i, craftMatrix.getItem(slotIndex));
+            matrixClone.setItem(i, menu.getSlot(start + i).getItem().copy());
         }
 
         for (int i = 0; i < size; i++) {
-            int slotIndex = menu.getSlot(start + i + rotateRectangularGrid(i, gridWidth, gridHeight, !reverse)).getContainerSlot();
-            craftMatrix.setItem(slotIndex, matrixClone.getItem(i));
+            Slot slot = menu.getSlot(start + i + rotateRectangularGrid(i, gridWidth, gridHeight, !reverse));
+            slot.set(matrixClone.getItem(i));
         }
 
         menu.broadcastChanges();

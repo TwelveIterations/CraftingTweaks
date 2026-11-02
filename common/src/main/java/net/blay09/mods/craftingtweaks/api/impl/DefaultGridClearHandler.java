@@ -6,6 +6,7 @@ import net.minecraft.util.Prediction;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class DefaultGridClearHandler implements GridClearHandler<AbstractContainerMenu> {
@@ -22,18 +23,18 @@ public class DefaultGridClearHandler implements GridClearHandler<AbstractContain
         int start = grid.getGridStartSlot(player, menu);
         int size = grid.getGridSize(player, menu);
         for (int i = start; i < start + size; i++) {
-            int slotIndex = menu.getSlot(i).getContainerSlot();
+            Slot slot = menu.getSlot(i);
             if (phantomItems) {
-                craftMatrix.setItem(slotIndex, ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             } else {
-                ItemStack itemStack = craftMatrix.getItem(slotIndex);
+                ItemStack itemStack = slot.getItem();
                 if (!itemStack.isEmpty()) {
                     ItemStack returnStack = itemStack.copy();
                     player.getInventory().add(returnStack);
-                    craftMatrix.setItem(slotIndex, returnStack.getCount() == 0 ? ItemStack.EMPTY : returnStack);
+                    slot.set(returnStack.getCount() == 0 ? ItemStack.EMPTY : returnStack);
                     if (returnStack.getCount() > 0 && forced) {
                         player.drop(returnStack, false, Prediction.SERVER_ONLY);
-                        craftMatrix.setItem(slotIndex, ItemStack.EMPTY);
+                        slot.set(ItemStack.EMPTY);
                     }
                 }
             }
