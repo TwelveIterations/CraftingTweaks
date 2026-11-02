@@ -10,6 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -23,13 +24,13 @@ public class DefaultGridBalanceHandler implements GridBalanceHandler<AbstractCon
             return;
         }
 
-        ArrayListMultimap<String, ItemStack> itemMap = ArrayListMultimap.create();
+        ArrayListMultimap<String, Slot> itemMap = ArrayListMultimap.create();
         Multiset<String> itemCount = HashMultiset.create();
         int start = grid.getGridStartSlot(player, menu);
         int size = grid.getGridSize(player, menu);
         for (int i = start; i < start + size; i++) {
-            int slotIndex = menu.getSlot(i).getContainerSlot();
-            ItemStack itemStack = craftMatrix.getItem(slotIndex);
+            Slot slot = menu.getSlot(i);
+            ItemStack itemStack = slot.getItem();
             if (!itemStack.isEmpty() && itemStack.getMaxStackSize() > 1) {
                 Identifier registryName = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
                 String key = Objects.toString(registryName);
@@ -38,25 +39,26 @@ public class DefaultGridBalanceHandler implements GridBalanceHandler<AbstractCon
                 if (!componentsPatch.isEmpty()) {
                     key = key + "@" + componentsPatch;
                 }
-                itemMap.put(key, itemStack);
+                itemMap.put(key, slot);
                 itemCount.add(key, itemStack.getCount());
             }
         }
 
         for (String key : itemMap.keySet()) {
-            List<ItemStack> balanceList = itemMap.get(key);
+            List<Slot> balanceList = itemMap.get(key);
             int totalCount = itemCount.count(key);
             int countPerStack = totalCount / balanceList.size();
             int restCount = totalCount % balanceList.size();
-            for (ItemStack itemStack : balanceList) {
-                itemStack.setCount(countPerStack);
+            for (Slot slot : balanceList) {
+                slot.set(slot.getItem().copyWithCount(countPerStack));
             }
 
             int idx = 0;
             while (restCount > 0) {
-                ItemStack itemStack = balanceList.get(idx);
+                Slot slot = balanceList.get(idx);
+                ItemStack itemStack = slot.getItem();
                 if (itemStack.getCount() < itemStack.getMaxStackSize()) {
-                    itemStack.grow(1);
+                    slot.set(itemStack.copyWithCount(itemStack.getCount() + 1));
                     restCount--;
                 }
                 idx++;
@@ -77,14 +79,15 @@ public class DefaultGridBalanceHandler implements GridBalanceHandler<AbstractCon
         }
 
         while (true) {
+            Slot biggestSlot = null;
             ItemStack biggestSlotStack = null;
             int biggestSlotSize = 1;
             int start = grid.getGridStartSlot(player, menu);
             int size = grid.getGridSize(player, menu);
             for (int i = start; i < start + size; i++) {
-                int slotIndex = menu.getSlot(i).getContainerSlot();
-                ItemStack itemStack = craftMatrix.getItem(slotIndex);
+                ItemStack itemStack = menu.getSlot(i).getItem();
                 if (!itemStack.isEmpty() && itemStack.getCount() > biggestSlotSize) {
+                    biggestSlot = menu.getSlot(i);
                     biggestSlotStack = itemStack;
                     biggestSlotSize = itemStack.getCount();
                 }
@@ -96,11 +99,16 @@ public class DefaultGridBalanceHandler implements GridBalanceHandler<AbstractCon
 
             boolean emptyBiggestSlot = false;
             for (int i = start; i < start + size; i++) {
-                int slotIndex = menu.getSlot(i).getContainerSlot();
-                ItemStack itemStack = craftMatrix.getItem(slotIndex);
+                ItemStack itemStack = menu.getSlot(i).getItem();
                 if (itemStack.isEmpty()) {
                     if (biggestSlotStack.getCount() > 1) {
-                        craftMatrix.setItem(slotIndex, biggestSlotStack.split(1));
+                        Slot slot = menu.getSlot(i);
+                        if (slot.mayPlace(biggestSlotStack) && slot.getMaxStackSize(biggestSlotStack) > 0) {
+                            ItemStack remaining = biggestSlotStack.copyWithCount(biggestSlotStack.getCount() - 1);
+                            slot.set(biggestSlotStack.copyWithCount(1));
+                            biggestSlot.set(remaining);
+                            biggestSlotStack = remaining;
+                        }
                     } else {
                         emptyBiggestSlot = true;
                     }

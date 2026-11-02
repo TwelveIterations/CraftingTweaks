@@ -6,6 +6,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 
 public class DefaultGridRotateHandler implements GridRotateHandler<AbstractContainerMenu> {
     protected boolean ignoresSlotId(int slotId) {
@@ -66,8 +67,7 @@ public class DefaultGridRotateHandler implements GridRotateHandler<AbstractConta
         int size = grid.getGridSize(player, menu);
         Container matrixClone = new SimpleContainer(size);
         for (int i = 0; i < size; i++) {
-            int slotIndex = menu.getSlot(start + i).getContainerSlot();
-            matrixClone.setItem(i, craftMatrix.getItem(slotIndex));
+            matrixClone.setItem(i, menu.getSlot(start + i).getItem().copy());
         }
 
         for (int i = 0; i < size; i++) {
@@ -75,8 +75,8 @@ public class DefaultGridRotateHandler implements GridRotateHandler<AbstractConta
                 continue;
             }
 
-            int slotIndex = menu.getSlot(start + rotateSlotId(i, reverse)).getContainerSlot();
-            craftMatrix.setItem(slotIndex, matrixClone.getItem(i));
+            Slot slot = menu.getSlot(start + rotateSlotId(i, reverse));
+            slot.set(matrixClone.getItem(i));
         }
 
         menu.broadcastChanges();
