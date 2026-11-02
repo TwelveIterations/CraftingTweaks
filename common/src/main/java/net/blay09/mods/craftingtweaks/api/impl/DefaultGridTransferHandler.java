@@ -17,34 +17,20 @@ public class DefaultGridTransferHandler implements GridTransferHandler<AbstractC
             return itemStack;
         }
 
-        ItemStack craftStack = craftMatrix.getItem(slotId);
-        if (!craftStack.isEmpty()) {
-            if (ItemStack.isSameItemSameComponents(craftStack, itemStack)) {
-                int spaceLeft = Math.min(craftMatrix.getMaxStackSize(), craftStack.getMaxStackSize()) - craftStack.getCount();
-                if (spaceLeft > 0) {
-                    ItemStack splitStack = itemStack.split(Math.min(spaceLeft, itemStack.getCount()));
-                    craftStack.grow(splitStack.getCount());
-                    if (itemStack.getCount() <= 0) {
-                        return ItemStack.EMPTY;
-                    }
-                }
+        int start = grid.getGridStartSlot(player, menu);
+        int size = grid.getGridSize(player, menu);
+        for (int i = start; i < start + size; i++) {
+            Slot slot = menu.getSlot(i);
+            if (slot.container == craftMatrix && slot.getContainerSlot() == slotId) {
+                return slot.safeInsert(itemStack);
             }
-        } else {
-            ItemStack transferStack = itemStack.split(Math.min(itemStack.getCount(), craftMatrix.getMaxStackSize()));
-            craftMatrix.setItem(slotId, transferStack);
         }
-
-        if (itemStack.getCount() <= 0) {
-            return ItemStack.EMPTY;
-        }
-
         return itemStack;
     }
 
     @Override
     public boolean transferIntoGrid(CraftingGrid grid, Player player, AbstractContainerMenu menu, Slot fromSlot) {
-        Container craftMatrix = grid.getCraftingMatrix(player, menu);
-        if (craftMatrix == null) {
+        if (grid.getCraftingMatrix(player, menu) == null) {
             return false;
         }
 
@@ -55,33 +41,24 @@ public class DefaultGridTransferHandler implements GridTransferHandler<AbstractC
             return false;
         }
 
-        int firstEmptySlot = -1;
+        int originalCount = itemStack.getCount();
+        Slot firstEmptySlot = null;
         for (int i = start; i < start + size; i++) {
-            int slotIndex = menu.getSlot(i).getContainerSlot();
-            ItemStack craftStack = craftMatrix.getItem(slotIndex);
-            if (!craftStack.isEmpty()) {
-                if (ItemStack.isSameItemSameComponents(craftStack, itemStack)) {
-                    int spaceLeft = Math.min(craftMatrix.getMaxStackSize(), craftStack.getMaxStackSize()) - craftStack.getCount();
-                    if (spaceLeft > 0) {
-                        ItemStack splitStack = itemStack.split(Math.min(spaceLeft, itemStack.getCount()));
-                        craftStack.grow(splitStack.getCount());
-                        if (itemStack.getCount() <= 0) {
-                            return true;
-                        }
-                    }
+            Slot slot = menu.getSlot(i);
+            if (slot.hasItem()) {
+                itemStack = slot.safeInsert(itemStack);
+                if (itemStack.isEmpty()) {
+                    return true;
                 }
-            } else if (firstEmptySlot == -1) {
-                firstEmptySlot = slotIndex;
+            } else if (firstEmptySlot == null && slot.mayPlace(itemStack) && slot.getMaxStackSize(itemStack) > 0) {
+                firstEmptySlot = slot;
             }
         }
 
-        if (itemStack.getCount() > 0 && firstEmptySlot != -1) {
-            ItemStack transferStack = itemStack.split(Math.min(itemStack.getCount(), craftMatrix.getMaxStackSize()));
-            craftMatrix.setItem(firstEmptySlot, transferStack);
-            return true;
+        if (!itemStack.isEmpty() && firstEmptySlot != null) {
+            itemStack = firstEmptySlot.safeInsert(itemStack);
         }
-
-        return false;
+        return itemStack.getCount() < originalCount;
     }
 
     @Override
