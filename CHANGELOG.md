@@ -1,1 +1,1 @@
-- Fixed crash with abnormal ImageButtons added by other mods
+- Fixed slots not being notified of updates when changes are made
