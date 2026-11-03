@@ -1,1 +1,1 @@
-- Updated to Minecraft 26.3
+- Fixed slots not being notified of updates when changes are made
